@@ -1,7 +1,9 @@
 #!/usr/bin/python
-
 import re
 import sys
+import csv
+import argparse
+import StringIO
 
 class WF:
     def __init__(self, key_length, ignore_case=True):
@@ -25,7 +27,6 @@ class WF:
 
         # Use regex to split text in words.
         for w in re.findall(r'\w+', text):
-
             # Lower case if case to be ignored.
             if (self.ignore_case):
                 w = w.lower()
@@ -33,7 +34,7 @@ class WF:
             # Increase word count.
             self.word_count += 1
 
-            # Build key of the appropriate length, start adding up frequences.
+            # Build key of the appropriate length, start adding up frequencies.
             if len(key) < self.key_length:
                 key.append(w)
             else:
@@ -50,22 +51,43 @@ class WF:
         """Getter for word count structure."""
         return self.wf
 
-    def __str__(self):
-        """Return string representation of the frequence list."""
-        output = "%s out of %s entrie(s) of length %s " % (len(self.wf),
-                                                           self.word_count / self.key_length,
-                                                           self.key_length)
-        output += "repeated:\n\n"
-        output += "%20s %20s %20s\n" % ("key", "occurence", "% occurence")
-        output += "="*80 + "\n"
+    def to_csv_str(self):
+        """Return CSV representation of the frequency list."""
+        csv_str = ""
+
+        # Writing output to the string file.
+        f = StringIO.StringIO(csv_str)
+
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+
+        writer.writerow(["word(s)", "occurrence count"])
 
         if len(self.wf) > 0:
-            # Sort by number of occurences before displaying.
+            for k in self.wf.keys():
+                writer.writerow([k, self.wf[k]])
+
+        output = f.getvalue()
+
+        f.close()
+
+        return output
+
+    def __str__(self):
+        """Return string representation of the frequency list."""
+        output = "%s words split in %s groups, group size %s:\n\n" % \
+                                            (self.word_count,
+                                            len(self.wf),
+                                            self.key_length)
+
+        output += "%20s %20s\n" % ("word(s)", "occurrence count")
+        output += "="*41 + "\n"
+
+        if len(self.wf) > 0:
+            # Sort by number of occurrences before displaying.
             for (k, v) in sorted(self.wf.items(),
                                  key=lambda (k,v): v, reverse=True):
 
-               output += "%20s %20s %20.2f%%\n" % (k, v,
-                          self.wf[k] * 1.0 / (self.word_count / self.key_length))
+               output += "%20s %20s\n" % (k, v)
            
             # Remove trailing newline character.
             output = output.rstrip()
@@ -74,42 +96,41 @@ class WF:
 
         return output
 
+def main():
+    parser = argparse.ArgumentParser(
+            description='Count the frequency usage of each word(s) in a text.',
+            epilog="https://github.com/jango/WF", prog='Word Frequency Counter')
 
-if __name__ == "__main__":
-    # Sample long string to use if no stdin data available.
-    long_string = """Lorem ipsum dolor sit amet, consectetuer adipiscing elit,
-                     sed diam nonummy nibh euismod tincidunt ut laoreet dolore
-                     magna aliquam erat volutpat. Ut wisi enim ad minim veniam,
-                     quis nostrud exerci tation ullamcorper suscipit lobortis
-                     nisl ut aliquip ex ea commodo consequat. Duis autem vel eum
-                     iriure dolor in hendrerit in vulputate velit esse molestie
-                     consequat, vel illum dolore eu feugiat nulla facilisis at
-                     vero eros et accumsan et iusto odio dignissim qui blandit
-                     praesent luptatum zzril delenit augue duis dolore te
-                     feugait nulla facilisi. Nam liber tempor cum soluta nobis
-                     eleifend option congue nihil imperdiet doming id quod mazim
-                     placerat facer possim assum. Typi non habent claritatem
-                     insitam; est usus legentis in iis qui facit eorum
-                     claritatem. Investigationes demonstraverunt lectores legere
-                     me lius quod ii legunt saepius. Claritas est etiam
-                     processus dynamicus, qui sequitur mutationem consuetudium
-                     lectorum. Mirum est notare quam littera gothica, quam nunc
-                     putamus parum claram, anteposuerit litterarum formas
-                     humanitatis per seacula quarta decima et quinta decima.
-                     Eodem modo typi, qui nunc nobis videntur parum clari, fiant
-                     sollemnes in futurum."""
+    parser.add_argument('-w', type=int, default=1,
+        help='number of words in a group')
+
+    parser.add_argument('-i', default=True, action='store_true',
+        help='case-sensitive count flag (defaults to false)')
+
+    parser.add_argument('-f', type=str, choices=['csv', 'txt'],
+        default='txt', help='output format')
+
+    parser.add_argument('-v', '--version', action='version',
+        version='%(prog)s 0.1a')
+
+    args = parser.parse_args()
 
     # Initialize word frequency counter.
-    wf = WF(1)
-    
-    # If we are being fed stuff through stdin.
-    if not sys.stdin.isatty():
-        while True:
-            s = sys.stdin.readline()
-            if not s:
-                break
-            wf.consume(s)
-    else:
-        wf.consume(long_string)
+    wf = WF(args.w, ignore_case=args.i)
 
-    print wf
+
+    # If we are being fed stuff through stdin.
+    while True:
+        s = sys.stdin.readline()
+        if not s:
+            break
+        wf.consume(s)
+
+    # Choose output format
+    if args.f == 'csv':
+        print wf.to_csv_str()
+    else:
+        print wf
+
+if __name__ == "__main__":
+    main()
