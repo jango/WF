@@ -1,11 +1,10 @@
 # Word Frequency Counter
 Word Frequency Counter allows you to count the frequency usage of each word or
-multiple words in an arbitrary text.
+multiple words in an arbitrary text. The script will read lines from stdin and
+count occurrence of k-words in the file (by default k=1, so script will count
+single word occurrences).
 
-This script will read lines from stdin and spit out a list of k-words appearance
-in the consumed text. By default, it counts single word occurrence only, but it
-can also count pairs, triplets, etc. You can also tell WF object to treat words
-case-sensitive.
+This script requires Python 2.7 to run.
 
 ## Usage
 
@@ -20,9 +19,10 @@ case-sensitive.
     -v, --version  show program's version number and exit
 
 
-## Sample
+## Example
 
-Below's what the script will produce if fed Dostoevsky's "Crime and Punishment".
+Below's what the script will produce if fed Dostoevsky's "Crime and Punishment",
+contained withing pg2554.txt file.
 
 ### Single words.
 
@@ -51,7 +51,6 @@ Below's what the script will produce if fed Dostoevsky's "Crime and Punishment".
     --More--
 
 ### Word pairs.
-
 
     ./wf.py -w 2 < pg2554.txt | more
 

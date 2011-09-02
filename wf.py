@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+# -*- coding: UTF-8 -*-
+
 import re
 import sys
 import csv
@@ -26,7 +28,9 @@ class WF:
         key = []
 
         # Use regex to split text in words.
-        for w in re.findall(r'\w+', text):
+        # print re.findall(r'(?u)\w+', u"раз два три")[0].encode('utf-8')
+
+        for w in re.findall(r'(?u)\w+', text):
             # Lower case if case to be ignored.
             if (self.ignore_case):
                 w = w.lower()
@@ -64,7 +68,7 @@ class WF:
 
         if len(self.wf) > 0:
             for k in self.wf.keys():
-                writer.writerow([k, self.wf[k]])
+                writer.writerow([k.encode('utf-8'), self.wf[k]])
 
         output = f.getvalue()
 
@@ -94,7 +98,8 @@ class WF:
         else:
             output = "No values in the frequency list."
 
-        return output
+        return output.encode('utf-8')
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -116,16 +121,19 @@ def main():
     args = parser.parse_args()
 
     # Initialize word frequency counter.
-    wf = WF(args.w, ignore_case=args.i)
 
+    wf = WF(args.w, ignore_case=args.i)
 
     # If we are being fed stuff through stdin.
     while True:
         s = sys.stdin.readline()
         if not s:
             break
-        wf.consume(s)
+        
+        # Unicode the string.
+        s = unicode(s, 'utf-8')
 
+        wf.consume(s)
     # Choose output format
     if args.f == 'csv':
         print wf.to_csv_str()
